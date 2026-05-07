@@ -298,6 +298,10 @@ In [CSP](https://w3c.github.io/webappsec-csp/)-restricted environments that disa
 
 Supported runtimes are browsers, Node.js v12+, Deno (`deno add npm:protobufjs`) and Bun (`bun add protobufjs`). When using the CLI with Bun, Node.js must also be installed.
 
+## Security
+
+protobuf.js favors transparent disclosure. Security-impacting reports are handled through coordinated GitHub Security Advisories where appropriate. See [SECURITY.md](./SECURITY.md) for supported release lines, reporting instructions, and notes on untrusted schema input.
+
 ## Conformance
 
 protobuf.js targets full binary wire-format conformance for **Proto2**, **Proto3** and **Editions**. CI runs the official Protocol Buffers conformance suite, with logs uploaded as artifacts.
@@ -384,5 +388,4 @@ npm run build
 
 * [API Documentation](https://protobufjs.github.io/protobuf.js)
 * [Changelog](./CHANGELOG.md)
-* [Security Policy](./SECURITY.md)
 * [Protocol Buffers Documentation](https://protobuf.dev/)
