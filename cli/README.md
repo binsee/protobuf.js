@@ -131,6 +131,24 @@ Note that declarations generated for JSON modules describe reflection-backed mes
 
 For nested reflected properties like `MyMessage.MyEnum`, type, service and enum names must start with an uppercase letter. Otherwise, use reflection lookups such as `root.lookupType(...)`.
 
+## protoc plugin
+
+The CLI also provides `protoc-gen-pbjs` for projects that already use `protoc` but prefer protobuf.js code generation.
+
+The plugin is an aggregate generator: each invocation writes one JavaScript module and, with `dts`, one matching declaration file.
+
+```sh
+protoc \
+  --plugin=protoc-gen-pbjs=./node_modules/.bin/protoc-gen-pbjs \
+  --pbjs_out=gen \
+  --pbjs_opt=dts \
+  proto/awesome.proto
+```
+
+By default, the plugin emits `index.js` with `target=static-module` and `wrap=esm`. Use `file=PATH` to choose the aggregate output file, `target=json-module` for a JSON module, `wrap=commonjs` for CommonJS output, and `keep-case` to preserve descriptor field names.
+
+Other `pbjs` code generation options can be passed as usual, for example `root=NAME`, `dependency=ID`, `lint=CONFIG`, `no-create`, `force-long`, or `null-semantics`. See the `pbjs` help output above for the full option set.
+
 ## Command line API
 
 Both utilities can be used programmatically by providing command line arguments and a callback to their respective `main` functions:
