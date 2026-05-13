@@ -156,7 +156,11 @@ function decoder(mtype) {
             ("case %i:{", field.id)
                 ("if(u!==%i)", types.basic[type])
                     ("break");
-            if (type === "string" || type === "bytes") gen
+            if (field.resolvedType instanceof Enum && field.typeDefault !== 0) gen
+                // TODO: Protoc rejects open enums whose first value is not zero.
+                // We should do the same, but for v8 this would be a regression.
+                ("if((v=r.%s())!==%j)", type, field.typeDefault);
+            else if (type === "string" || type === "bytes") gen
                 ("if((v=r.%s()).length)", type);
             else if (types.long[type] !== undefined) gen
                 ("if(typeof(v=r.%s())===\"object\"?v.low||v.high:v!==0)", type);

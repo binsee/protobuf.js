@@ -120,7 +120,6 @@ module.exports = [
             "no-useless-return": 1,
             "no-useless-assignment": 0,
             "no-void": 1,
-            "no-warning-comments": 1,
             "no-with": 1,
             "radix": 1,
             "vars-on-top": 0,                   // makes code harder to read, not faster

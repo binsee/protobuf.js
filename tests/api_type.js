@@ -264,6 +264,28 @@ tape.test("decode known fields by wire type", function(test) {
     test.end();
 });
 
+// TODO: Protoc rejects open enums whose first value is not zero.
+// We should do the same, but for v8 this would be a regression.
+// Remove this test once we enforce this restriction.
+tape.test("decode implicit enum zero with non-zero default", function(test) {
+    var Message = protobuf.Root.fromJSON({
+        nested: {
+            Op: { values: { UNKNOWN: -1, INSERT: 0 } },
+            Message: {
+                fields: {
+                    op: { type: "Op", id: 4 }
+                }
+            }
+        }
+    }).lookupType("Message");
+
+    test.notOk(Message.fields.op.hasPresence, "enum field should have implicit presence");
+    test.equal(Message.fields.op.typeDefault, -1, "enum field should use the first value as default");
+    test.equal(Message.decode(protobuf.util.newBuffer([0x20, 0x00])).op, 0, "should preserve explicit enum zero");
+
+    test.end();
+});
+
 tape.test("object conversion nesting", function(test) {
     function nestedObject(depth) {
         var object = { value: 42 };
