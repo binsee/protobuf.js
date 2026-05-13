@@ -1,5 +1,12 @@
 # Changelog
 
+## [8.3.0](https://github.com/protobufjs/protobuf.js/compare/protobufjs-v8.2.1...protobufjs-v8.3.0) (2026-05-13)
+
+
+### Features
+
+* Improve generated typings ([#2244](https://github.com/protobufjs/protobuf.js/issues/2244)) ([faa424e](https://github.com/protobufjs/protobuf.js/commit/faa424e3837fe43f1f010b0ccdeb583d808a57cf))
+
 ## [8.2.1](https://github.com/protobufjs/protobuf.js/compare/protobufjs-v8.2.0...protobufjs-v8.2.1) (2026-05-13)
 
 
