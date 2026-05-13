@@ -13,8 +13,7 @@ $root.Message = (function() {
 
     /**
      * Properties of a Message.
-     * @exports IMessage
-     * @interface IMessage
+     * @typedef {Object} Message.$Properties
      * @property {string|null} [stringVal] Message stringVal
      * @property {Array.<string>|null} [stringRepeated] Message stringRepeated
      * @property {number|Long|null} [uint64Val] Message uint64Val
@@ -28,12 +27,24 @@ $root.Message = (function() {
      */
 
     /**
+     * Properties of a Message.
+     * @exports IMessage
+     * @interface IMessage
+     * @augments Message.$Properties
+     * @deprecated Use Message.$Properties instead.
+     */
+
+    /**
+     * Shape of a Message.
+     * @typedef {Message.$Properties} Message.$Shape
+     */
+
+    /**
      * Constructs a new Message.
      * @exports Message
      * @classdesc Represents a Message.
-     * @implements IMessage
      * @constructor
-     * @param {IMessage=} [properties] Properties to set
+     * @param {Message.$Properties=} [properties] Properties to set
      * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding
      */
     function Message(properties) {
@@ -125,8 +136,12 @@ $root.Message = (function() {
      * @function create
      * @memberof Message
      * @static
-     * @param {IMessage=} [properties] Properties to set
+     * @param {Message.$Properties=} [properties] Properties to set
      * @returns {Message} Message instance
+     * @type {{
+     *   (properties: Message.$Shape): Message & Message.$Shape;
+     *   (properties?: Message.$Properties): Message;
+     * }}
      */
     Message.create = function create(properties) {
         return new Message(properties);
@@ -137,7 +152,7 @@ $root.Message = (function() {
      * @function encode
      * @memberof Message
      * @static
-     * @param {IMessage} message Message message or plain object to encode
+     * @param {Message.$Properties} message Message message or plain object to encode
      * @param {$protobuf.Writer} [writer] Writer to encode to
      * @returns {$protobuf.Writer} Writer
      */
@@ -184,7 +199,7 @@ $root.Message = (function() {
      * @function encodeDelimited
      * @memberof Message
      * @static
-     * @param {IMessage} message Message message or plain object to encode
+     * @param {Message.$Properties} message Message message or plain object to encode
      * @param {$protobuf.Writer} [writer] Writer to encode to
      * @returns {$protobuf.Writer} Writer
      */
@@ -199,7 +214,7 @@ $root.Message = (function() {
      * @static
      * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
      * @param {number} [length] Message length if known beforehand
-     * @returns {Message} Message
+     * @returns {Message & Message.$Shape} Message
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
@@ -350,7 +365,7 @@ $root.Message = (function() {
      * @memberof Message
      * @static
      * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @returns {Message} Message
+     * @returns {Message & Message.$Shape} Message
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */

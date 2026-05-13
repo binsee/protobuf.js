@@ -13,19 +13,30 @@ $root.TypeUrlTest = (function() {
 
     /**
      * Properties of a TypeUrlTest.
+     * @typedef {Object} TypeUrlTest.$Properties
+     * @property {TypeUrlTest.Nested.$Properties|null} [nested] TypeUrlTest nested
+     * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding
+     */
+
+    /**
+     * Properties of a TypeUrlTest.
      * @exports ITypeUrlTest
      * @interface ITypeUrlTest
-     * @property {TypeUrlTest.INested|null} [nested] TypeUrlTest nested
-     * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding
+     * @augments TypeUrlTest.$Properties
+     * @deprecated Use TypeUrlTest.$Properties instead.
+     */
+
+    /**
+     * Shape of a TypeUrlTest.
+     * @typedef {TypeUrlTest.$Properties} TypeUrlTest.$Shape
      */
 
     /**
      * Constructs a new TypeUrlTest.
      * @exports TypeUrlTest
      * @classdesc Represents a TypeUrlTest.
-     * @implements ITypeUrlTest
      * @constructor
-     * @param {ITypeUrlTest=} [properties] Properties to set
+     * @param {TypeUrlTest.$Properties=} [properties] Properties to set
      * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding
      */
     function TypeUrlTest(properties) {
@@ -37,7 +48,7 @@ $root.TypeUrlTest = (function() {
 
     /**
      * TypeUrlTest nested.
-     * @member {TypeUrlTest.INested|null|undefined} nested
+     * @member {TypeUrlTest.Nested.$Properties|null|undefined} nested
      * @memberof TypeUrlTest
      * @instance
      */
@@ -48,8 +59,12 @@ $root.TypeUrlTest = (function() {
      * @function create
      * @memberof TypeUrlTest
      * @static
-     * @param {ITypeUrlTest=} [properties] Properties to set
+     * @param {TypeUrlTest.$Properties=} [properties] Properties to set
      * @returns {TypeUrlTest} TypeUrlTest instance
+     * @type {{
+     *   (properties: TypeUrlTest.$Shape): TypeUrlTest & TypeUrlTest.$Shape;
+     *   (properties?: TypeUrlTest.$Properties): TypeUrlTest;
+     * }}
      */
     TypeUrlTest.create = function create(properties) {
         return new TypeUrlTest(properties);
@@ -60,7 +75,7 @@ $root.TypeUrlTest = (function() {
      * @function encode
      * @memberof TypeUrlTest
      * @static
-     * @param {ITypeUrlTest} message TypeUrlTest message or plain object to encode
+     * @param {TypeUrlTest.$Properties} message TypeUrlTest message or plain object to encode
      * @param {$protobuf.Writer} [writer] Writer to encode to
      * @returns {$protobuf.Writer} Writer
      */
@@ -80,7 +95,7 @@ $root.TypeUrlTest = (function() {
      * @function encodeDelimited
      * @memberof TypeUrlTest
      * @static
-     * @param {ITypeUrlTest} message TypeUrlTest message or plain object to encode
+     * @param {TypeUrlTest.$Properties} message TypeUrlTest message or plain object to encode
      * @param {$protobuf.Writer} [writer] Writer to encode to
      * @returns {$protobuf.Writer} Writer
      */
@@ -95,7 +110,7 @@ $root.TypeUrlTest = (function() {
      * @static
      * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
      * @param {number} [length] Message length if known beforehand
-     * @returns {TypeUrlTest} TypeUrlTest
+     * @returns {TypeUrlTest & TypeUrlTest.$Shape} TypeUrlTest
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
@@ -138,7 +153,7 @@ $root.TypeUrlTest = (function() {
      * @memberof TypeUrlTest
      * @static
      * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @returns {TypeUrlTest} TypeUrlTest
+     * @returns {TypeUrlTest & TypeUrlTest.$Shape} TypeUrlTest
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
@@ -244,19 +259,30 @@ $root.TypeUrlTest = (function() {
 
         /**
          * Properties of a Nested.
-         * @memberof TypeUrlTest
-         * @interface INested
+         * @typedef {Object} TypeUrlTest.Nested.$Properties
          * @property {string|null} [a] Nested a
          * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding
+         */
+
+        /**
+         * Properties of a Nested.
+         * @memberof TypeUrlTest
+         * @interface INested
+         * @augments TypeUrlTest.Nested.$Properties
+         * @deprecated Use TypeUrlTest.Nested.$Properties instead.
+         */
+
+        /**
+         * Shape of a Nested.
+         * @typedef {TypeUrlTest.Nested.$Properties} TypeUrlTest.Nested.$Shape
          */
 
         /**
          * Constructs a new Nested.
          * @memberof TypeUrlTest
          * @classdesc Represents a Nested.
-         * @implements INested
          * @constructor
-         * @param {TypeUrlTest.INested=} [properties] Properties to set
+         * @param {TypeUrlTest.Nested.$Properties=} [properties] Properties to set
          * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding
          */
         function Nested(properties) {
@@ -279,8 +305,12 @@ $root.TypeUrlTest = (function() {
          * @function create
          * @memberof TypeUrlTest.Nested
          * @static
-         * @param {TypeUrlTest.INested=} [properties] Properties to set
+         * @param {TypeUrlTest.Nested.$Properties=} [properties] Properties to set
          * @returns {TypeUrlTest.Nested} Nested instance
+         * @type {{
+         *   (properties: TypeUrlTest.Nested.$Shape): TypeUrlTest.Nested & TypeUrlTest.Nested.$Shape;
+         *   (properties?: TypeUrlTest.Nested.$Properties): TypeUrlTest.Nested;
+         * }}
          */
         Nested.create = function create(properties) {
             return new Nested(properties);
@@ -291,7 +321,7 @@ $root.TypeUrlTest = (function() {
          * @function encode
          * @memberof TypeUrlTest.Nested
          * @static
-         * @param {TypeUrlTest.INested} message Nested message or plain object to encode
+         * @param {TypeUrlTest.Nested.$Properties} message Nested message or plain object to encode
          * @param {$protobuf.Writer} [writer] Writer to encode to
          * @returns {$protobuf.Writer} Writer
          */
@@ -311,7 +341,7 @@ $root.TypeUrlTest = (function() {
          * @function encodeDelimited
          * @memberof TypeUrlTest.Nested
          * @static
-         * @param {TypeUrlTest.INested} message Nested message or plain object to encode
+         * @param {TypeUrlTest.Nested.$Properties} message Nested message or plain object to encode
          * @param {$protobuf.Writer} [writer] Writer to encode to
          * @returns {$protobuf.Writer} Writer
          */
@@ -326,7 +356,7 @@ $root.TypeUrlTest = (function() {
          * @static
          * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
          * @param {number} [length] Message length if known beforehand
-         * @returns {TypeUrlTest.Nested} Nested
+         * @returns {TypeUrlTest.Nested & TypeUrlTest.Nested.$Shape} Nested
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
@@ -372,7 +402,7 @@ $root.TypeUrlTest = (function() {
          * @memberof TypeUrlTest.Nested
          * @static
          * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-         * @returns {TypeUrlTest.Nested} Nested
+         * @returns {TypeUrlTest.Nested & TypeUrlTest.Nested.$Shape} Nested
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */

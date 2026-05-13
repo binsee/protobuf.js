@@ -13,15 +13,14 @@ $root.Package = (function() {
 
     /**
      * Properties of a Package.
-     * @exports IPackage
-     * @interface IPackage
+     * @typedef {Object} Package.$Properties
      * @property {string|null} [name] Package name
      * @property {string|null} [version] Package version
      * @property {string|null} [versionScheme] Package versionScheme
      * @property {string|null} [description] Package description
      * @property {string|null} [author] Package author
      * @property {string|null} [license] Package license
-     * @property {Package.IRepository|null} [repository] Package repository
+     * @property {Package.Repository.$Properties|null} [repository] Package repository
      * @property {string|null} [bugs] Package bugs
      * @property {string|null} [homepage] Package homepage
      * @property {Array.<string>|null} [keywords] Package keywords
@@ -36,12 +35,24 @@ $root.Package = (function() {
      */
 
     /**
+     * Properties of a Package.
+     * @exports IPackage
+     * @interface IPackage
+     * @augments Package.$Properties
+     * @deprecated Use Package.$Properties instead.
+     */
+
+    /**
+     * Shape of a Package.
+     * @typedef {Package.$Properties} Package.$Shape
+     */
+
+    /**
      * Constructs a new Package.
      * @exports Package
      * @classdesc Represents a Package.
-     * @implements IPackage
      * @constructor
-     * @param {IPackage=} [properties] Properties to set
+     * @param {Package.$Properties=} [properties] Properties to set
      * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding
      */
     function Package(properties) {
@@ -107,7 +118,7 @@ $root.Package = (function() {
 
     /**
      * Package repository.
-     * @member {Package.IRepository|null|undefined} repository
+     * @member {Package.Repository.$Properties|null|undefined} repository
      * @memberof Package
      * @instance
      */
@@ -198,8 +209,12 @@ $root.Package = (function() {
      * @function create
      * @memberof Package
      * @static
-     * @param {IPackage=} [properties] Properties to set
+     * @param {Package.$Properties=} [properties] Properties to set
      * @returns {Package} Package instance
+     * @type {{
+     *   (properties: Package.$Shape): Package & Package.$Shape;
+     *   (properties?: Package.$Properties): Package;
+     * }}
      */
     Package.create = function create(properties) {
         return new Package(properties);
@@ -210,7 +225,7 @@ $root.Package = (function() {
      * @function encode
      * @memberof Package
      * @static
-     * @param {IPackage} message Package message or plain object to encode
+     * @param {Package.$Properties} message Package message or plain object to encode
      * @param {$protobuf.Writer} [writer] Writer to encode to
      * @returns {$protobuf.Writer} Writer
      */
@@ -268,7 +283,7 @@ $root.Package = (function() {
      * @function encodeDelimited
      * @memberof Package
      * @static
-     * @param {IPackage} message Package message or plain object to encode
+     * @param {Package.$Properties} message Package message or plain object to encode
      * @param {$protobuf.Writer} [writer] Writer to encode to
      * @returns {$protobuf.Writer} Writer
      */
@@ -283,7 +298,7 @@ $root.Package = (function() {
      * @static
      * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
      * @param {number} [length] Message length if known beforehand
-     * @returns {Package} Package
+     * @returns {Package & Package.$Shape} Package
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
@@ -552,7 +567,7 @@ $root.Package = (function() {
      * @memberof Package
      * @static
      * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @returns {Package} Package
+     * @returns {Package & Package.$Shape} Package
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
@@ -902,20 +917,31 @@ $root.Package = (function() {
 
         /**
          * Properties of a Repository.
-         * @memberof Package
-         * @interface IRepository
+         * @typedef {Object} Package.Repository.$Properties
          * @property {string|null} [type] Repository type
          * @property {string|null} [url] Repository url
          * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding
          */
 
         /**
+         * Properties of a Repository.
+         * @memberof Package
+         * @interface IRepository
+         * @augments Package.Repository.$Properties
+         * @deprecated Use Package.Repository.$Properties instead.
+         */
+
+        /**
+         * Shape of a Repository.
+         * @typedef {Package.Repository.$Properties} Package.Repository.$Shape
+         */
+
+        /**
          * Constructs a new Repository.
          * @memberof Package
          * @classdesc Represents a Repository.
-         * @implements IRepository
          * @constructor
-         * @param {Package.IRepository=} [properties] Properties to set
+         * @param {Package.Repository.$Properties=} [properties] Properties to set
          * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding
          */
         function Repository(properties) {
@@ -946,8 +972,12 @@ $root.Package = (function() {
          * @function create
          * @memberof Package.Repository
          * @static
-         * @param {Package.IRepository=} [properties] Properties to set
+         * @param {Package.Repository.$Properties=} [properties] Properties to set
          * @returns {Package.Repository} Repository instance
+         * @type {{
+         *   (properties: Package.Repository.$Shape): Package.Repository & Package.Repository.$Shape;
+         *   (properties?: Package.Repository.$Properties): Package.Repository;
+         * }}
          */
         Repository.create = function create(properties) {
             return new Repository(properties);
@@ -958,7 +988,7 @@ $root.Package = (function() {
          * @function encode
          * @memberof Package.Repository
          * @static
-         * @param {Package.IRepository} message Repository message or plain object to encode
+         * @param {Package.Repository.$Properties} message Repository message or plain object to encode
          * @param {$protobuf.Writer} [writer] Writer to encode to
          * @returns {$protobuf.Writer} Writer
          */
@@ -980,7 +1010,7 @@ $root.Package = (function() {
          * @function encodeDelimited
          * @memberof Package.Repository
          * @static
-         * @param {Package.IRepository} message Repository message or plain object to encode
+         * @param {Package.Repository.$Properties} message Repository message or plain object to encode
          * @param {$protobuf.Writer} [writer] Writer to encode to
          * @returns {$protobuf.Writer} Writer
          */
@@ -995,7 +1025,7 @@ $root.Package = (function() {
          * @static
          * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
          * @param {number} [length] Message length if known beforehand
-         * @returns {Package.Repository} Repository
+         * @returns {Package.Repository & Package.Repository.$Shape} Repository
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
@@ -1050,7 +1080,7 @@ $root.Package = (function() {
          * @memberof Package.Repository
          * @static
          * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-         * @returns {Package.Repository} Repository
+         * @returns {Package.Repository & Package.Repository.$Shape} Repository
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */

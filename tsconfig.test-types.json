@@ -1,0 +1,18 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "types": [
+            "node"
+        ],
+        "lib": [
+            "es2019"
+        ],
+        "noEmit": true,
+        "strictNullChecks": true
+    },
+    "include": [
+        "tests/comp_descriptor.ts",
+        "tests/comp_textformat.ts",
+        "tests/data/*.ts"
+    ]
+}

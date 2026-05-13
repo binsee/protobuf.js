@@ -1,12 +1,7 @@
 import * as $protobuf from "..";
+import { ITextFormatOptions } from "./textformat.generated";
 
-export interface ITextFormatOptions {
-    /** Also includes and formats unknown fields. */
-    unknowns?: boolean;
-}
-
-/** Maximum recursion depth for formatting length-delimited unknown fields. */
-export let unknownRecursionLimit: number;
+export * from "./textformat.generated";
 
 declare module ".." {
     namespace textformat {

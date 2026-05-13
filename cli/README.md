@@ -98,7 +98,7 @@ Generates TypeScript definitions from annotated JavaScript files.
 
   -g, --global    Name of the global object in browser environments, if any.
 
-  -i, --import    Comma delimited list of imports. Local names will equal camelCase of the basename.
+  -i, --import    Comma delimited list of imports, optionally as localName=path.
 
   --no-constructor Emits private constructors for reflection-backed declarations.
 
@@ -108,7 +108,7 @@ Generates TypeScript definitions from annotated JavaScript files.
 
   -n, --name      Wraps everything in a module of the specified name.
 
-  -m, --main      Whether building the main library without any imports.
+  -m, --main      Whether building a standalone file without any imports.
 
 usage: pbts [options] file1.js file2.js ...  (or)  other | pbts [options] -
 ```

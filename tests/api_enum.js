@@ -93,6 +93,12 @@ tape.test("reflected enums", function(test) {
     enm.remove("e");
     test.same( enm.valuesOptions, {}, "should clean up value options");
 
+    var enmFromJSON = protobuf.Enum.fromJSON("FromJSON", {
+        values: { a: 0 },
+        valuesOptions: { a: { deprecated: true } }
+    });
+    test.same(enmFromJSON.valuesOptions, { a: { deprecated: true } }, "should import value options from JSON");
+
     enm.reserved = [[100,200], "BAD_NAME"];
     test.throws(function() {
         enm.add("d", 101);

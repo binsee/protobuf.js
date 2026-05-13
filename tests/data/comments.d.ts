@@ -1,47 +1,62 @@
 import * as $protobuf from "../..";
 import Long = require("long");
-export interface ITest1 {
-    field1?: (string|null);
-    field2?: (number|null);
-    field3?: (boolean|null);
+
+export interface ITest1 extends Test1.$Properties {
+}
+
+export class Test1 {
+    constructor(properties?: Test1.$Properties);
     $unknowns?: Uint8Array[];
+    field1: string;
+    field2: number;
+    field3: boolean;
+    static create(properties: Test1.$Shape): Test1 & Test1.$Shape;
+    static create(properties?: Test1.$Properties): Test1;
+    static encode(message: Test1.$Properties, writer?: $protobuf.Writer): $protobuf.Writer;
+    static encodeDelimited(message: Test1.$Properties, writer?: $protobuf.Writer): $protobuf.Writer;
+    static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): Test1 & Test1.$Shape;
+    static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): Test1 & Test1.$Shape;
+    static verify(message: { [k: string]: any }): (string|null);
+    static fromObject(object: { [k: string]: any }): Test1;
+    static toObject(message: Test1, options?: $protobuf.IConversionOptions): { [k: string]: any };
+    toJSON(): { [k: string]: any };
+    static getTypeUrl(prefix?: string): string;
 }
 
-export class Test1 implements ITest1 {
-    constructor(properties?: ITest1);
-    public $unknowns?: Uint8Array[];
-    public field1: string;
-    public field2: number;
-    public field3: boolean;
-    public static create(properties?: ITest1): Test1;
-    public static encode(message: ITest1, writer?: $protobuf.Writer): $protobuf.Writer;
-    public static encodeDelimited(message: ITest1, writer?: $protobuf.Writer): $protobuf.Writer;
-    public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): Test1;
-    public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): Test1;
-    public static verify(message: { [k: string]: any }): (string|null);
-    public static fromObject(object: { [k: string]: any }): Test1;
-    public static toObject(message: Test1, options?: $protobuf.IConversionOptions): { [k: string]: any };
-    public toJSON(): { [k: string]: any };
-    public static getTypeUrl(prefix?: string): string;
+export namespace Test1 {
+    interface $Properties {
+        field1?: (string|null);
+        field2?: (number|null);
+        field3?: (boolean|null);
+        $unknowns?: Uint8Array[];
+    }
+    type $Shape = Test1.$Properties;
 }
 
-export interface ITest2 {
+export interface ITest2 extends Test2.$Properties {
+}
+
+export class Test2 {
+    constructor(properties?: Test2.$Properties);
     $unknowns?: Uint8Array[];
+    static create(properties: Test2.$Shape): Test2 & Test2.$Shape;
+    static create(properties?: Test2.$Properties): Test2;
+    static encode(message: Test2.$Properties, writer?: $protobuf.Writer): $protobuf.Writer;
+    static encodeDelimited(message: Test2.$Properties, writer?: $protobuf.Writer): $protobuf.Writer;
+    static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): Test2 & Test2.$Shape;
+    static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): Test2 & Test2.$Shape;
+    static verify(message: { [k: string]: any }): (string|null);
+    static fromObject(object: { [k: string]: any }): Test2;
+    static toObject(message: Test2, options?: $protobuf.IConversionOptions): { [k: string]: any };
+    toJSON(): { [k: string]: any };
+    static getTypeUrl(prefix?: string): string;
 }
 
-export class Test2 implements ITest2 {
-    constructor(properties?: ITest2);
-    public $unknowns?: Uint8Array[];
-    public static create(properties?: ITest2): Test2;
-    public static encode(message: ITest2, writer?: $protobuf.Writer): $protobuf.Writer;
-    public static encodeDelimited(message: ITest2, writer?: $protobuf.Writer): $protobuf.Writer;
-    public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): Test2;
-    public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): Test2;
-    public static verify(message: { [k: string]: any }): (string|null);
-    public static fromObject(object: { [k: string]: any }): Test2;
-    public static toObject(message: Test2, options?: $protobuf.IConversionOptions): { [k: string]: any };
-    public toJSON(): { [k: string]: any };
-    public static getTypeUrl(prefix?: string): string;
+export namespace Test2 {
+    interface $Properties {
+        $unknowns?: Uint8Array[];
+    }
+    type $Shape = Test2.$Properties;
 }
 
 export enum Test3 {

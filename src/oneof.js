@@ -54,6 +54,7 @@ function OneOf(name, fieldNames, options, comment) {
  * @interface IOneOf
  * @property {Array.<string>} oneof Oneof field names
  * @property {Object.<string,*>} [options] Oneof options
+ * @property {string|null} [comment] Oneof comment
  */
 
 /**

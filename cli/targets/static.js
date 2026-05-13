@@ -36,7 +36,7 @@ function static_target(root, options, callback) {
         }
         if (config.comments) {
             if (root.comment) {
-                pushComment("@fileoverview " + root.comment);
+                pushComment([ "@fileoverview " + root.comment ]);
                 push("");
             }
             push("// Exported root namespace");
@@ -106,7 +106,7 @@ function escapeName(name) {
 }
 
 function aOrAn(name) {
-    return ((/^[hH](?:ou|on|ei)/.test(name) || /^[aeiouAEIOU][a-z]/.test(name)) && !/^us/i.test(name)
+    return ((/^[hH](?:ou|on|ei)/.test(name) || /^[aeiouAEIOU][a-z]/.test(name)) && !/^(?:use?|uni([^nmd]|mo)|one|once)/i.test(name)
         ? "an "
         : "a ") + name;
 }
@@ -349,7 +349,7 @@ function buildFunction(type, functionName, gen, scope) {
         push("};");
 }
 
-function toJsType(field, parentIsInterface = false) {
+function toJsType(field, parentIsInterface = false, withNarrowing = false) {
     var type;
 
     // With null semantics, interfaces are composed from interfaces and messages from messages
@@ -386,7 +386,14 @@ function toJsType(field, parentIsInterface = false) {
             break;
         default:
             if (field.resolve().resolvedType) {
-                type = exportName(field.resolvedType, asInterface);
+                if (field.resolvedType instanceof protobuf.Type)
+                    type = withNarrowing
+                        ? shapeName(field.resolvedType)
+                        : asInterface
+                        ? propertiesName(field.resolvedType)
+                        : exportName(field.resolvedType, asInterface);
+                else
+                    type = exportName(field.resolvedType, asInterface);
             }
             else {
                 type = "*"; // should not happen
@@ -423,49 +430,151 @@ function toPropName(field, optional) {
     return optional ? "[" + prop + "]" : prop;
 }
 
+function toTypePropName(name, optional) {
+    var prop = util.safeProp(name); // either .name or ["name"]
+    if (prop.charAt(0) === ".")
+        prop = prop.substring(1);
+    else
+        prop = JSON.parse(prop.substring(1, prop.length - 1));
+    if (!/^[$\w]+$/.test(prop) || util.patterns.reservedRe.test(prop))
+        prop = JSON.stringify(prop);
+    return prop + (optional ? "?" : "");
+}
+
 function isNullable(field) {
     return field.hasPresence && !field.required;
 }
 
+function propertiesName(type) {
+    return exportName(type) + ".$Properties";
+}
+
+function shapeName(type) {
+    return exportName(type) + ".$Shape";
+}
+
+function narrowedType(type) {
+    return exportName(type) + " & " + shapeName(type);
+}
+
+function oneofType(oneof, selectedField) {
+    var props = [ toTypePropName(oneof.name, true) + ": " + (selectedField ? JSON.stringify(selectedField.name) : "undefined") ];
+    oneof.oneof.forEach(function(fieldName) {
+        var field = oneof.parent.fields[fieldName];
+        props.push(toTypePropName(field.name, field !== selectedField) + ": " + (field === selectedField ? toJsType(field, true, true) : "null"));
+    });
+    return "{ " + props.join("; ") + " }";
+}
+
+function oneofTypes(type) {
+    return type.oneofsArray.filter(function(oneof) {
+        return !oneof.isProto3Optional;
+    }).map(function(oneof) {
+        oneof.resolve();
+        var cases = [ oneofType(oneof) ];
+        oneof.oneof.forEach(function(fieldName) {
+            cases.push(oneofType(oneof, oneof.parent.fields[fieldName]));
+        });
+        return "(" + cases.join("|") + ")";
+    });
+}
+
+function hasNarrowing(type, seen) {
+    if (!seen)
+        seen = {};
+    if (seen[type.fullName])
+        return false;
+    seen[type.fullName] = true;
+    if (type.oneofsArray.some(function(oneof) { return !oneof.isProto3Optional; })) {
+        delete seen[type.fullName];
+        return true;
+    }
+    var narrowed = type.fieldsArray.some(function(field) {
+        field.resolve();
+        return field.resolvedType instanceof protobuf.Type && hasNarrowing(field.resolvedType, seen);
+    });
+    delete seen[type.fullName];
+    return narrowed;
+}
+
+function returnTags(typeName, description, tsType) {
+    return [ "@returns {" + (tsType || typeName) + "} " + description ];
+}
+
+function propertyType(field, withNarrowing) {
+    var jsType = toJsType(field, /* parentIsInterface = */ true, withNarrowing);
+    var nullable = false;
+    if (config["null-semantics"]) {
+        // With semantic nulls, only explicit optional fields and one-of members can be set to null
+        // Implicit fields (proto3), maps and lists can be omitted, but if specified must be non-null
+        // Implicit fields will take their default value when the message is constructed
+        if (field.optional) {
+            if (isNullable(field))
+                jsType = jsType + "|null";
+            nullable = true;
+        }
+    }
+    else {
+        // Without semantic nulls, everything is optional in proto3
+        // Do not allow |undefined to keep backwards compatibility
+        if (field.optional) {
+            jsType = jsType + "|null";
+            nullable = true;
+        }
+    }
+    return {
+        jsType: jsType,
+        nullable: nullable
+    };
+}
+
+function shapeType(type, oneofs) {
+    if (!hasNarrowing(type))
+        return propertiesName(type);
+    var props = [];
+    type.fieldsArray.forEach(function(field) {
+        var prop = propertyType(field, /* withNarrowing = */ true);
+        props.push("  " + toTypePropName(field.name, prop.nullable) + ": " + prop.jsType + ";");
+    });
+    props.push("  " + toTypePropName("$unknowns", true) + ": Array.<Uint8Array>;");
+    return "{\n" + props.join("\n") + "\n}" + (oneofs.length ? " & (\n  " + oneofs.join("\n) & (\n  ") + "\n)" : "");
+}
+
 function buildType(ref, type) {
+    var oneofs = oneofTypes(type);
 
     if (config.comments) {
         var typeDef = [
             "Properties of " + aOrAn(type.name) + ".",
-            type.parent instanceof protobuf.Root ? "@exports " + escapeName("I" + type.name) : "@memberof " + exportName(type.parent),
-            "@interface " + escapeName("I" + type.name)
+            "@typedef {Object} " + propertiesName(type)
         ];
         type.fieldsArray.forEach(function(field) {
-            var jsType = toJsType(field, /* parentIsInterface = */ true);
-            var nullable = false;
-            if (config["null-semantics"]) {
-                // With semantic nulls, only explicit optional fields and one-of members can be set to null
-                // Implicit fields (proto3), maps and lists can be omitted, but if specified must be non-null
-                // Implicit fields will take their default value when the message is constructed
-                if (field.optional) {
-                    if (isNullable(field)) {
-                        jsType = jsType + "|null|undefined";
-                        nullable = true;
-                    }
-                    else {
-                        jsType = jsType + "|undefined";
-                        nullable = true;
-                    }
-                }
-            }
-            else {
-                // Without semantic nulls, everything is optional in proto3
-                // Do not allow |undefined to keep backwards compatibility
-                if (field.optional) {
-                    jsType = jsType + "|null";
-                    nullable = true;
-                }
-            }
-            typeDef.push("@property {" + jsType + "} " + toPropName(field, nullable) + " " + (field.comment || type.name + " " + field.name));
+            var prop = propertyType(field, /* withNarrowing = */ false);
+            typeDef.push("@property {" + prop.jsType + "} " + toPropName(field, prop.nullable) + " " + (field.comment || type.name + " " + field.name));
         });
+        if (oneofs.length) {
+            type.oneofsArray.forEach(function(oneof) {
+                if (oneof.isProto3Optional)
+                    return;
+                typeDef.push("@property {" + oneof.oneof.map(JSON.stringify).join("|") + "} [" + oneof.name + "] " + (oneof.comment || type.name + " " + oneof.name));
+            });
+        }
         typeDef.push("@property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding");
         push("");
         pushComment(typeDef);
+        push("");
+        pushComment([
+            "Properties of " + aOrAn(type.name) + ".",
+            type.parent instanceof protobuf.Root ? "@exports " + escapeName("I" + type.name) : "@memberof " + exportName(type.parent),
+            "@interface " + escapeName("I" + type.name),
+            "@augments " + propertiesName(type),
+            "@deprecated Use " + propertiesName(type) + " instead."
+        ]);
+        push("");
+        pushComment([
+            (oneofs.length ? "Narrowed shape" : "Shape") + " of " + aOrAn(type.name) + ".",
+            "@typedef {" + shapeType(type, oneofs) + "} " + shapeName(type)
+        ]);
     }
 
     // constructor
@@ -474,9 +583,8 @@ function buildType(ref, type) {
         "Constructs a new " + type.name + ".",
         type.parent instanceof protobuf.Root ? "@exports " + escapeName(type.name) : "@memberof " + exportName(type.parent),
         "@classdesc " + (type.comment || "Represents " + aOrAn(type.name) + "."),
-        config.comments ? "@implements " + escapeName("I" + type.name) : null,
         "@constructor",
-        "@param {" + exportName(type, true) + "=} [" + (config.beautify ? "properties" : "p") + "] Properties to set"
+        "@param {" + propertiesName(type) + "=} [" + (config.beautify ? "properties" : "p") + "] Properties to set"
     ];
     if (config.comments) {
         type.fieldsArray.forEach(function(field) {
@@ -571,9 +679,14 @@ function buildType(ref, type) {
             "@function create",
             "@memberof " + exportName(type),
             "@static",
-            "@param {" + exportName(type, true) + "=} [properties] Properties to set",
+            "@param {" + propertiesName(type) + "=} [properties] Properties to set",
             "@returns {" + exportName(type) + "} " + type.name + " instance"
-        ]);
+        ].concat([
+            "@type {{\n" +
+            "  (properties: " + shapeName(type) + "): " + narrowedType(type) + ";\n" +
+            "  (properties?: " + propertiesName(type) + "): " + exportName(type) + ";\n" +
+            "}}"
+        ]));
         push(escapeName(type.name) + ".create = function create(properties) {");
             ++indent;
             push("return new " + escapeName(type.name) + "(properties);");
@@ -588,7 +701,7 @@ function buildType(ref, type) {
             "@function encode",
             "@memberof " + exportName(type),
             "@static",
-            "@param {" + exportName(type, !config.forceMessage) + "} " + (config.beautify ? "message" : "m") + " " + type.name + " message or plain object to encode",
+            "@param {" + (config.forceMessage ? exportName(type) : propertiesName(type)) + "} " + (config.beautify ? "message" : "m") + " " + type.name + " message or plain object to encode",
             "@param {$protobuf.Writer} [" + (config.beautify ? "writer" : "w") + "] Writer to encode to",
             "@returns {$protobuf.Writer} Writer"
         ]);
@@ -601,7 +714,7 @@ function buildType(ref, type) {
                 "@function encodeDelimited",
                 "@memberof " + exportName(type),
                 "@static",
-                "@param {" + exportName(type, !config.forceMessage) + "} message " + type.name + " message or plain object to encode",
+                "@param {" + (config.forceMessage ? exportName(type) : propertiesName(type)) + "} message " + type.name + " message or plain object to encode",
                 "@param {$protobuf.Writer} [writer] Writer to encode to",
                 "@returns {$protobuf.Writer} Writer"
             ]);
@@ -621,11 +734,11 @@ function buildType(ref, type) {
             "@memberof " + exportName(type),
             "@static",
             "@param {$protobuf.Reader|Uint8Array} " + (config.beautify ? "reader" : "r") + " Reader or buffer to decode from",
-            "@param {number} [" + (config.beautify ? "length" : "l") + "] Message length if known beforehand",
-            "@returns {" + exportName(type) + "} " + type.name,
+            "@param {number} [" + (config.beautify ? "length" : "l") + "] Message length if known beforehand"
+        ].concat(returnTags(exportName(type), type.name, narrowedType(type))).concat([
             "@throws {Error} If the payload is not a reader or valid buffer",
             "@throws {$protobuf.util.ProtocolError} If required fields are missing"
-        ]);
+        ]));
         buildFunction(type, "decode", protobuf.decoder(type));
 
         if (config.delimited) {
@@ -635,11 +748,11 @@ function buildType(ref, type) {
                 "@function decodeDelimited",
                 "@memberof " + exportName(type),
                 "@static",
-                "@param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from",
-                "@returns {" + exportName(type) + "} " + type.name,
+                "@param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from"
+            ].concat(returnTags(exportName(type), type.name, narrowedType(type))).concat([
                 "@throws {Error} If the payload is not a reader or valid buffer",
                 "@throws {$protobuf.util.ProtocolError} If required fields are missing"
-            ]);
+            ]));
             push(escapeName(type.name) + ".decodeDelimited = function decodeDelimited(reader) {");
             ++indent;
                 push("if (!(reader instanceof $Reader))");

@@ -1,39 +1,11 @@
-// A minimal test for pbjs tool targets.
+// Tests for pbjs tool targets.
 
 var tape = require("tape");
 var path = require("path");
-var Module = require("module");
 var protobuf = require("..");
 var fs = require("fs");
-var EventEmitter = require("events").EventEmitter;
 var child_process = require("child_process");
-
-function cliTest(test, testFunc) {
-    // pbjs does not seem to work with Node v4, so skip this test if we're running on it
-    if (process.versions.node.match(/^4\./)) {
-        test.end();
-        return;
-    }
-
-    // Alter the require cache to make the cli/targets/static work since it requires "protobufjs"
-    // and we don't want to mess with "npm link"
-    var savedResolveFilename = Module._resolveFilename;
-    Module._resolveFilename = function(request, parent) { 
-      if (request.startsWith("protobufjs")) {
-        return request;
-      }
-      return savedResolveFilename(request, parent);
-    };
-    require.cache.protobufjs = require.cache[path.resolve("index.js")];
-
-    try {
-        testFunc();
-    } finally {
-        // Rollback all the require() related mess we made
-        delete require.cache.protobufjs;
-        Module._resolveFilename = savedResolveFilename;
-    }
-}
+var cliTest = require("./helpers/cli");
 
 tape.test("pbjs generates static code", function(test) {
     cliTest(test, function() {
@@ -107,6 +79,24 @@ tape.test("pbjs generates correct ES module static-module imports", function(tes
         }, function(err, jsCode) {
             test.error(err, "static-module code generation worked");
             test.ok(jsCode.includes("import $protobuf from \"protobufjs/minimal.js\";"), "esm wrapper uses a default import and explicit .js extension");
+            test.end();
+        });
+    });
+});
+
+tape.test("pbjs emits file overview comments on one line", function(test) {
+    cliTest(test, function() {
+        var root = new protobuf.Root();
+        root.comment = "Generated file.";
+
+        var staticTarget = require("../cli/targets/static");
+
+        staticTarget(root, {
+            comments: true
+        }, function(err, jsCode) {
+            test.error(err, "static code generation worked");
+            test.ok(jsCode.indexOf(" * @fileoverview Generated file.") >= 0, "emits file overview comment");
+            test.equal(jsCode.indexOf("@\n * f\n * i\n * l\n * e"), -1, "does not split file overview into characters");
             test.end();
         });
     });
@@ -401,7 +391,8 @@ tape.test("pbjs --dts writes module declarations", function(test) {
             test.ok(fs.existsSync(staticOut), "writes static-module javascript");
             test.ok(fs.existsSync(staticDts), "writes static-module declarations");
             var staticTypes = fs.readFileSync(staticDts, "utf8");
-            test.ok(staticTypes.indexOf("constructor(properties?: IPackage);") >= 0, "keeps constructable static declarations");
+            test.ok(staticTypes.indexOf("constructor(properties?: Package.$Properties);") >= 0, "keeps constructable static declarations");
+            test.ok(staticTypes.indexOf("type $Shape = Package.$Properties;") >= 0, "aliases shape to properties when there is no narrowing");
 
             pbjs.main([
                 "--target", "json-module",
@@ -416,8 +407,8 @@ tape.test("pbjs --dts writes module declarations", function(test) {
                 var jsonTypes = fs.readFileSync(jsonDts, "utf8");
                 test.ok(jsonTypes.indexOf("private constructor();") >= 0, "marks reflection-backed declarations as non-constructable");
                 test.ok(jsonTypes.indexOf("Reflection-backed declarations are not constructable. Use Package.create(...) instead.") >= 0, "explains create usage");
-                test.ok(jsonTypes.indexOf("public static create(properties?: IPackage): Package;") >= 0, "keeps reflection Type create declaration");
-                test.equal(jsonTypes.indexOf("constructor(properties?: IPackage);"), -1, "does not expose public message constructors");
+                test.ok(jsonTypes.indexOf("static create(properties?: Package.$Properties): Package;") >= 0, "keeps reflection Type create declaration");
+                test.equal(jsonTypes.indexOf("constructor(properties?: Package.$Properties);"), -1, "does not expose public message constructors");
 
                 pbjs.main([
                     "--target", "json-module",
@@ -451,17 +442,182 @@ tape.test("pbjs --dts writes module declarations", function(test) {
                         test.ok(fs.existsSync(jsonMinimalOut), "writes minimal json-module javascript");
                         test.ok(fs.existsSync(jsonMinimalDts), "writes minimal json-module declarations");
                         var minimalTypes = fs.readFileSync(jsonMinimalDts, "utf8");
-                        test.equal(minimalTypes.indexOf("public static create("), -1, "omits disabled create declaration");
-                        test.equal(minimalTypes.indexOf("public static encode("), -1, "omits disabled encode declaration");
-                        test.equal(minimalTypes.indexOf("public static decode("), -1, "omits disabled decode declaration");
-                        test.equal(minimalTypes.indexOf("public static verify("), -1, "omits disabled verify declaration");
-                        test.equal(minimalTypes.indexOf("public static fromObject("), -1, "omits disabled fromObject declaration");
-                        test.equal(minimalTypes.indexOf("public static toObject("), -1, "omits disabled toObject declaration");
-                        test.equal(minimalTypes.indexOf("public static getTypeUrl("), -1, "omits disabled getTypeUrl declaration");
+                        test.equal(minimalTypes.indexOf("static create("), -1, "omits disabled create declaration");
+                        test.equal(minimalTypes.indexOf("static encode("), -1, "omits disabled encode declaration");
+                        test.equal(minimalTypes.indexOf("static decode("), -1, "omits disabled decode declaration");
+                        test.equal(minimalTypes.indexOf("static verify("), -1, "omits disabled verify declaration");
+                        test.equal(minimalTypes.indexOf("static fromObject("), -1, "omits disabled fromObject declaration");
+                        test.equal(minimalTypes.indexOf("static toObject("), -1, "omits disabled toObject declaration");
+                        test.equal(minimalTypes.indexOf("static getTypeUrl("), -1, "omits disabled getTypeUrl declaration");
                         cleanup();
                         test.end();
                     });
                 });
+            });
+        });
+    });
+});
+
+tape.test("pbjs --dts narrows oneof interfaces", function(test) {
+    cliTest(test, function() {
+        var pbjs = require("../cli/pbjs");
+        var prefix = path.join(".tmp", "pbjs-dts-oneof-test-" + process.pid + "-" + Date.now());
+        var staticOut = prefix + ".js";
+        var staticDts = prefix + ".d.ts";
+
+        if (!fs.existsSync(".tmp"))
+            fs.mkdirSync(".tmp");
+
+        function cleanup() {
+            [ staticOut, staticDts ].forEach(function(file) {
+                try {
+                    fs.unlinkSync(file);
+                } catch (e) {
+                    // best effort cleanup
+                }
+            });
+        }
+
+        cleanup();
+        pbjs.main([
+            "--target", "static-module",
+            "--wrap", "commonjs",
+            "--out", staticOut,
+            "--dts",
+            "tests/data/cli/test.proto"
+        ], function(err) {
+            test.error(err, "static-module --dts generation worked");
+            test.ok(fs.existsSync(staticDts), "writes static-module declarations");
+
+            var staticCode = fs.readFileSync(staticOut, "utf8");
+            var staticTypes = fs.readFileSync(staticDts, "utf8");
+            test.ok(staticCode.indexOf("@type {{") >= 0, "documents create overloads with TypeScript JSDoc");
+            test.equal(staticCode.indexOf("@tstype"), -1, "uses standard JSDoc return types");
+            test.ok(staticTypes.indexOf("export interface IOneofContainer extends OneofContainer.$Properties") >= 0, "keeps a legacy properties interface");
+            test.ok(staticTypes.indexOf("export class OneofContainer {") >= 0, "does not implement the scoped properties interface");
+            test.equal(staticTypes.indexOf("implements OneofContainer.$Properties"), -1, "omits explicit scoped properties implementation");
+            test.ok(staticTypes.indexOf("constructor(properties?: OneofContainer.$Properties);") >= 0, "uses the scoped properties type for construction");
+            test.ok(staticTypes.indexOf("static create(properties: OneofContainer.$Shape): OneofContainer & OneofContainer.$Shape;") >= 0, "narrows create from oneof-safe input");
+            test.ok(staticTypes.indexOf("static create(properties?: OneofContainer.$Properties): OneofContainer;") >= 0, "keeps broad create overload");
+            test.ok(staticTypes.indexOf("static encode(message: OneofContainer.$Properties, writer?: $protobuf.Writer): $protobuf.Writer;") >= 0, "uses the scoped properties type for encoding");
+            test.ok(staticTypes.indexOf("static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): OneofContainer & OneofContainer.$Shape;") >= 0, "narrows decoded oneof messages");
+            test.equal(staticTypes.indexOf("$Oneofs"), -1, "does not expose an intermediate oneof type");
+            test.ok(staticTypes.indexOf("type $Shape = {\n  stringInOneof?: string|null;\n  messageInOneof?: Message.$Shape|null;") >= 0, "emits multiline recursive shape fields");
+            test.ok(staticTypes.indexOf("{ someOneof?: \"messageInOneof\"; stringInOneof?: null; messageInOneof: Message.$Shape }") >= 0, "emits oneof refinement union");
+            test.ok(staticTypes.indexOf("type $Shape = Message.$Properties;") >= 0, "aliases plain shape type for non-oneof message");
+
+            cleanup();
+            test.end();
+        });
+    });
+});
+
+tape.test("pbjs --dts generated message typings compile", function(test) {
+    cliTest(test, function() {
+        var pbjs = require("../cli/pbjs");
+        var prefix = path.join(".tmp", "pbjs-dts-types-test-" + process.pid + "-" + Date.now());
+        var staticOut = prefix + ".js";
+        var staticDts = prefix + ".d.ts";
+        var tsOut = prefix + ".check.ts";
+        var tsconfigOut = prefix + ".tsconfig.json";
+        var tsc = require.resolve("typescript/bin/tsc");
+
+        if (!fs.existsSync(".tmp"))
+            fs.mkdirSync(".tmp");
+
+        function cleanup() {
+            [ staticOut, staticDts, tsOut, tsconfigOut ].forEach(function(file) {
+                try {
+                    fs.unlinkSync(file);
+                } catch (e) {
+                    // best effort cleanup
+                }
+            });
+        }
+
+        cleanup();
+        pbjs.main([
+            "--target", "static-module",
+            "--wrap", "commonjs",
+            "--out", staticOut,
+            "--dts",
+            "tests/data/cli/test.proto"
+        ], function(err) {
+            test.error(err, "static-module --dts generation worked");
+
+            fs.writeFileSync(tsOut, [
+                "import { Enum, Message, OneofContainer } from \"./" + path.basename(prefix) + "\";",
+                "",
+                "function expectType<T>(value: T): void { void value; }",
+                "",
+                "const message = new Message({ value: 1 });",
+                "Message.encode(message).finish();",
+                "Message.encode({ value: 1 }).finish();",
+                "expectType<number>(Message.decode(new Uint8Array()).value);",
+                "",
+                "const byCase = OneofContainer.create({ someOneof: \"stringInOneof\", stringInOneof: \"abc\" });",
+                "if (byCase.someOneof === \"stringInOneof\") {",
+                "    expectType<string>(byCase.stringInOneof);",
+                "    expectType<null|undefined>(byCase.messageInOneof);",
+                "}",
+                "",
+                "const byField = OneofContainer.create({ stringInOneof: \"abc\" });",
+                "if (byField.stringInOneof != null) {",
+                "    expectType<string>(byField.stringInOneof);",
+                "    expectType<null|undefined>(byField.messageInOneof);",
+                "}",
+                "",
+                "const byMessage = OneofContainer.create({ messageInOneof: { value: 1 } });",
+                "if (byMessage.someOneof === \"messageInOneof\")",
+                "    expectType<Message.$Shape>(byMessage.messageInOneof);",
+                "",
+                "const broadProperties: OneofContainer.$Properties = {",
+                "    stringInOneof: \"abc\",",
+                "    messageInOneof: { value: 1 }",
+                "};",
+                "const broad = OneofContainer.create(broadProperties);",
+                "expectType<string|null|undefined>(broad.stringInOneof);",
+                "",
+                "const constructed = new OneofContainer({ stringInOneof: \"abc\" });",
+                "expectType<string|null|undefined>(constructed.stringInOneof);",
+                "",
+                "const decoded = OneofContainer.decode(new Uint8Array());",
+                "if (decoded.someOneof === \"stringInOneof\")",
+                "    expectType<string>(decoded.stringInOneof);",
+                "if (decoded.messageInOneof != null)",
+                "    expectType<Message.$Shape>(decoded.messageInOneof);",
+                "",
+                "OneofContainer.encode({",
+                "    regularField: \"regular\",",
+                "    enumField: Enum.SOMETHING,",
+                "    stringInOneof: \"abc\"",
+                "}).finish();"
+            ].join("\n"));
+
+            fs.writeFileSync(tsconfigOut, JSON.stringify({
+                compilerOptions: {
+                    baseUrl: "..",
+                    esModuleInterop: true,
+                    lib: [ "es2015" ],
+                    noEmit: true,
+                    paths: {
+                        "protobufjs/minimal": [ "minimal" ],
+                        "protobufjs": [ "index" ]
+                    },
+                    strictNullChecks: true,
+                    types: [ "node" ]
+                },
+                files: [ path.basename(tsOut) ]
+            }, null, 4));
+
+            child_process.execFile(process.execPath, [ tsc, "-p", tsconfigOut ], function(tscErr, stdout, stderr) {
+                if (stdout)
+                    process.stdout.write(stdout);
+                if (stderr)
+                    process.stderr.write(stderr);
+                test.error(tscErr, "generated declarations type-check");
+                cleanup();
+                test.end();
             });
         });
     });
@@ -487,235 +643,6 @@ tape.test("pbjs escapes static target names", function(test) {
         });
     });
 });
-
-tape.test("pbts passes jsdoc arguments without a shell", function(test) {
-    var pbts = require("../cli/pbts");
-    var originalSpawn = child_process.spawn;
-    var file = "file with \"quotes\" `backticks` 'apostrophes' and ;.js";
-
-    test.plan(5);
-
-    child_process.spawn = function(cmd, args, options) {
-        var child = new EventEmitter();
-        child.stdout = new EventEmitter();
-        child.stderr = { pipe: function() {} };
-        var nodePath = typeof Bun !== "undefined"
-            ? process.env.npm_node_execpath || "node"
-            : process.execPath;
-
-        test.equal(cmd, nodePath, "should execute node directly");
-        test.ok(/jsdoc[\\/]jsdoc\.js$/.test(args[0]), "should execute jsdoc directly");
-        test.equal(args[args.length - 1], file, "should pass file path as a single argument");
-        test.equal(options.stdio, "pipe", "should pipe jsdoc output");
-
-        process.nextTick(function() {
-            child.stdout.emit("data", "declare namespace test {}\n");
-            child.stdout.emit("end");
-            child.emit("close", 0);
-        });
-
-        return child;
-    };
-
-    pbts.main([file], function(err) {
-        child_process.spawn = originalSpawn;
-        test.error(err, "should generate definitions");
-    });
-});
-
-tape.test("pbts emits class properties for extension fields", function(test) {
-    var pbts = require("../cli/pbts");
-
-    pbts.main(["tests/data/test.js"], function(err, tsCode) {
-        test.error(err, "definition generation worked");
-        test.ok(tsCode.indexOf('public ".jspb.test.IndirectExtension.str": string;') >= 0, "should emit scalar extension property on the class");
-        test.ok(tsCode.indexOf('public ".jspb.test.CloneExtension.extField"?: (jspb.test.ICloneExtension|null);') >= 0, "should emit message extension property on the class");
-        test.end();
-    });
-});
-
-tape.test("without null-defaults, absent optional fields have zero values", function(test) {
-    cliTest(test, function() {
-        var root = protobuf.loadSync("tests/data/cli/null-defaults.proto");
-        root.resolveAll();
-
-        var staticTarget = require("../cli/targets/static");
-
-        staticTarget(root, {
-            create: true,
-            decode: true,
-            encode: true,
-            convert: true,
-        }, function(err, jsCode) {
-            test.error(err, 'static code generation worked');
-
-            // jsCode is the generated code; we'll eval it
-            // (since this is what we normally does with the code, right?)
-            // This is a test code. Do not use this in production.
-            var $protobuf = protobuf;
-            eval(jsCode);
-
-            var OptionalFields = protobuf.roots.default.OptionalFields;
-            test.ok(OptionalFields, "type is loaded");
-
-            // Check default values
-            var msg = OptionalFields.fromObject({});
-            test.equal(msg.a, null, "default submessage is null");
-            test.equal(msg.b, "", "default string is empty");
-            test.equal(msg.c, 0, "default integer is 0");
-
-            test.end();
-        });
-    });
-});
-
-tape.test("with null-defaults, absent optional fields have null values", function(test) {
-    cliTest(test, function() {
-        var root = protobuf.loadSync("tests/data/cli/null-defaults.proto");
-        root.resolveAll();
-
-        var staticTarget = require("../cli/targets/static");
-
-        staticTarget(root, {
-            create: true,
-            decode: true,
-            encode: true,
-            convert: true,
-            "null-defaults": true,
-        }, function(err, jsCode) {
-            test.error(err, 'static code generation worked');
-
-            // jsCode is the generated code; we'll eval it
-            // (since this is what we normally does with the code, right?)
-            // This is a test code. Do not use this in production.
-            var $protobuf = protobuf;
-            eval(jsCode);
-
-            var OptionalFields = protobuf.roots.default.OptionalFields;
-            test.ok(OptionalFields, "type is loaded");
-
-            // Check default values
-            var msg = OptionalFields.fromObject({});
-            test.equal(msg.a, null, "default submessage is null");
-            test.equal(msg.b, null, "default string is null");
-            test.equal(msg.c, null, "default integer is null");
-
-            test.end();
-        });
-    });
-});
-
-
-tape.test("with --null-semantics, optional fields are handled correctly in proto2", function(test) {
-    cliTest(test, function() {
-        var root = protobuf.loadSync("tests/data/cli/null-defaults.proto");
-        root.resolveAll();
-
-        var staticTarget = require("../cli/targets/static");
-
-        staticTarget(root, {
-            create: true,
-            decode: true,
-            encode: true,
-            convert: true,
-            comments: true,
-            "null-semantics": true,
-        }, function(err, jsCode) {
-
-            test.error(err, 'static code generation worked');
-
-            test.ok(jsCode.includes("@property {OptionalFields.ISubMessage|null|undefined} [a] OptionalFields a"), "Property for a should use an interface")
-            test.ok(jsCode.includes("@member {OptionalFields.SubMessage|null} a"), "Member for a should use a message type")
-            test.ok(jsCode.includes("OptionalFields.prototype.a = null;"), "Initializer for a should be null")
-
-            test.ok(jsCode.includes("@property {number|null|undefined} [c] OptionalFields c"), "Property for c should be nullable")
-            test.ok(jsCode.includes("@member {number|null} c"), "Member for c should be nullable")
-            test.ok(jsCode.includes("OptionalFields.prototype.c = null;"), "Initializer for c should be null")
-
-            test.ok(jsCode.includes("@property {number} d OptionalFields d"), "Property for d should not be nullable")
-            test.ok(jsCode.includes("@member {number} d"), "Member for d should not be nullable")
-            test.ok(jsCode.includes("OptionalFields.prototype.d = 0;"), "Initializer for d should be zero")
-
-            test.end();
-        });
-    });
-});
-
-
-tape.test("with --null-semantics, optional fields are handled correctly in proto3", function(test) {
-    cliTest(test, function() {
-        var root = protobuf.loadSync("tests/data/cli/null-defaults-proto3.proto");
-        root.resolveAll();
-
-        var staticTarget = require("../cli/targets/static");
-
-        staticTarget(root, {
-            create: true,
-            decode: true,
-            encode: true,
-            convert: true,
-            comments: true,
-            "null-semantics": true,
-        }, function(err, jsCode) {
-
-            test.error(err, 'static code generation worked');
-
-            test.ok(jsCode.includes("@property {OptionalFields.ISubMessage|null|undefined} [a] OptionalFields a"), "Property for a should use an interface")
-            test.ok(jsCode.includes("@member {OptionalFields.SubMessage|null} a"), "Member for a should use a message type")
-            test.ok(jsCode.includes("OptionalFields.prototype.a = null;"), "Initializer for a should be null")
-
-            test.ok(jsCode.includes("@property {number|null|undefined} [c] OptionalFields c"), "Property for c should be nullable")
-            test.ok(jsCode.includes("@member {number|null} c"), "Member for c should be nullable")
-            test.ok(jsCode.includes("OptionalFields.prototype.c = null;"), "Initializer for c should be null")
-
-            test.ok(jsCode.includes("@property {number|undefined} [d] OptionalFields d"), "Property for d should be optional but not nullable")
-            test.ok(jsCode.includes("@member {number} d"), "Member for d should not be nullable")
-            test.ok(jsCode.includes("OptionalFields.prototype.d = 0;"), "Initializer for d should be zero")
-
-            test.end();
-        });
-    });
-});
-
-tape.test("with --null-semantics, optional fields are handled correctly in editions", function(test) {
-    cliTest(test, function() {
-        var root = protobuf.loadSync("tests/data/cli/null-defaults-edition2023.proto");
-        root.resolveAll();
-
-        var staticTarget = require("../cli/targets/static");
-
-        staticTarget(root, {
-            create: true,
-            decode: true,
-            encode: true,
-            convert: true,
-            comments: true,
-            "null-semantics": true,
-        }, function(err, jsCode) {
-
-            test.error(err, 'static code generation worked');
-
-            test.ok(jsCode.includes("@property {OptionalFields.ISubMessage|null|undefined} [a] OptionalFields a"), "Property for a should use an interface")
-            test.ok(jsCode.includes("@member {OptionalFields.SubMessage|null} a"), "Member for a should use a message type")
-            test.ok(jsCode.includes("OptionalFields.prototype.a = null;"), "Initializer for a should be null")
-
-            test.ok(jsCode.includes("@property {string|null|undefined} [e] OptionalFields e"), "Property for e should be nullable")
-            test.ok(jsCode.includes("@member {string|null} e"), "Member for e should be nullable")
-            test.ok(jsCode.includes("OptionalFields.prototype.e = null;"), "Initializer for e should be null")
-
-            test.ok(jsCode.includes("@property {number} r OptionalFields r"), "Property for r should not be nullable")
-            test.ok(jsCode.includes("@member {number} r"), "Member for r should not be nullable")
-            test.ok(jsCode.includes("OptionalFields.prototype.r = 0;"), "Initializer for r should be zero")
-
-            test.ok(jsCode.includes("@property {number|undefined} [i] OptionalFields i"), "Property for i should be optional but not nullable")
-            test.ok(jsCode.includes("@member {number} i"), "Member for i should not be nullable")
-            test.ok(jsCode.includes("OptionalFields.prototype.i = 0;"), "Initializer for i should be zero")
-
-            test.end();
-        });
-    });
-});
-
 
 tape.test("pbjs generates static code with message filter", function (test) {
     cliTest(test, function () {
@@ -765,227 +692,3 @@ tape.test("pbjs generates static code with message filter", function (test) {
     });
 });
 
-tape.test("proto3 roundtrip", function(test) {
-    const proto = `syntax = "proto3";
-
-message OptionalFields {
-
-    optional SubMessage a = 1;
-    optional string b = 2;
-    repeated uint32 c = 3 [packed=false];
-    uint32 d = 4;
-
-    message SubMessage {
-
-        string a = 1;
-    }
-}`;
-    cliTest(test, function() {
-        var root = protobuf.parse(proto).root.resolveAll();
-        var protoTarget = require("../cli/targets/proto3");
-
-        protoTarget(root, {}, function(err, output) {
-            test.error(err, 'proto code generation worked');
-
-            test.equal(output, proto);
-
-            test.end();
-        });
-    });
-});
-
-tape.test("proto2 roundtrip", function(test) {
-    const proto = `syntax = "proto2";
-
-message OptionalFields {
-
-    optional OptionalFields a = 1;
-    required string b = 2;
-    repeated uint32 c = 3 [packed=true];
-    optional float d = 4 [default=0.1];
-    optional group OptionalGroup = 5 {
-
-        optional string a = 1;
-    }
-    repeated group RepeatedGroup = 6 {
-
-        optional string a = 1;
-    }
-    required group RequiredGroup = 7 {
-
-        optional string a = 1;
-    }
-}`;
-    cliTest(test, function() {
-        var root = protobuf.parse(proto).root.resolveAll();
-        var protoTarget = require("../cli/targets/proto2");
-
-        protoTarget(root, {}, function(err, output) {
-            test.error(err, 'proto code generation worked');
-
-            test.equal(output, proto);
-
-            test.end();
-        });
-    });
-});
-
-tape.test("proto3 to proto2 valid", function(test) {
-    const proto3 = `syntax = "proto3";
-
-message OptionalFields {
-    message SubMessage {
-        optional string a = 1;
-    }
-
-    optional SubMessage a = 1;
-    repeated int32 b = 2;
-    repeated uint32 c = 3 [packed=false];
-
-}`;
-    const proto2 = `syntax = "proto2";
-
-message OptionalFields {
-
-    optional SubMessage a = 1;
-    repeated int32 b = 2 [packed=true];
-    repeated uint32 c = 3;
-
-    message SubMessage {
-
-        optional string a = 1;
-    }
-}`;
-    cliTest(test, function() {
-        var root = protobuf.parse(proto3).root.resolveAll();
-        var protoTarget = require("../cli/targets/proto2");
-
-        protoTarget(root, {}, function(err, output) {
-            test.error(err, 'proto code generation worked');
-
-            test.equal(output, proto2);
-
-            test.end();
-        });
-    });
-});
-
-tape.test("proto2 to proto3 valid", function(test) {
-    const proto2 = `syntax = "proto2";
-
-message OptionalFields {
-    message SubMessage {
-        optional string a = 1;
-    }
-
-    optional SubMessage a = 1;
-    repeated int32 b = 2;
-    repeated uint32 c = 3 [packed=true];
-}`;
-    const proto3 = `syntax = "proto3";
-
-message OptionalFields {
-
-    optional SubMessage a = 1;
-    repeated int32 b = 2 [packed=false];
-    repeated uint32 c = 3;
-
-    message SubMessage {
-
-        optional string a = 1;
-    }
-}`;
-    cliTest(test, function() {
-        var root = protobuf.parse(proto2).root.resolveAll();
-        var protoTarget = require("../cli/targets/proto3");
-
-        protoTarget(root, {}, function(err, output) {
-            test.error(err, 'proto code generation worked');
-
-            test.equal(output, proto3);
-
-            test.end();
-        });
-    });
-});
-
-
-tape.test("edition 2023 to proto2 valid", function(test) {
-    const editions = `edition = "2023";
-option features.repeated_field_encoding = EXPANDED;
-
-message OptionalFields {
-    message SubMessage {
-        string a = 1 [features.field_presence = LEGACY_REQUIRED];
-    }
-
-    SubMessage a = 1;
-    repeated int32 b = 2 [features.repeated_field_encoding = PACKED];
-    repeated uint32 c = 3;
-}`;
-    const proto2 = `syntax = "proto2";
-
-message OptionalFields {
-
-    optional SubMessage a = 1;
-    repeated int32 b = 2 [packed=true];
-    repeated uint32 c = 3;
-
-    message SubMessage {
-
-        required string a = 1;
-    }
-}`;
-    cliTest(test, function() {
-        var root = protobuf.parse(editions).root.resolveAll();
-        var protoTarget = require("../cli/targets/proto2");
-
-        protoTarget(root, {}, function(err, output) {
-            test.error(err, 'proto code generation worked');
-
-            test.equal(output, proto2);
-
-            test.end();
-        });
-    });
-});
-
-tape.test("edition 2023 to proto3 valid", function(test) {
-    const editions = `edition = "2023";
-option features.repeated_field_encoding = EXPANDED;
-
-message OptionalFields {
-    message SubMessage {
-        string a = 1 [features.field_presence = IMPLICIT];
-    }
-
-    SubMessage a = 1;
-    repeated int32 b = 2 [features.repeated_field_encoding = PACKED];
-    repeated uint32 c = 3;
-}`;
-    const proto3 = `syntax = "proto3";
-
-message OptionalFields {
-
-    optional SubMessage a = 1;
-    repeated int32 b = 2;
-    repeated uint32 c = 3 [packed=false];
-
-    message SubMessage {
-
-        string a = 1;
-    }
-}`;
-    cliTest(test, function() {
-        var root = protobuf.parse(editions).root.resolveAll();
-        var protoTarget = require("../cli/targets/proto3");
-
-        protoTarget(root, {}, function(err, output) {
-            test.error(err, 'proto code generation worked');
-
-            test.equal(output, proto3);
-
-            test.end();
-        });
-    });
-});

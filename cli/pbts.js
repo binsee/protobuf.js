@@ -23,7 +23,7 @@ exports.main = function(args, callback) {
 
 /**
  * Generates TypeScript definitions from a JavaScript source.
- * @param {string|Buffer} source JavaScript source
+ * @param {string|Uint8Array} source JavaScript source
  * @param {string[]} args Command line arguments
  * @param {function(?Error, string=)} [callback] Optional completion callback
  * @returns {number|undefined} Exit code, if known
@@ -78,7 +78,7 @@ function run(options) {
                 "",
                 "  -g, --global    Name of the global object in browser environments, if any.",
                 "",
-                "  -i, --import    Comma delimited list of imports. Local names will equal camelCase of the basename.",
+                "  -i, --import    Comma delimited list of imports, optionally as localName=path.",
                 "",
                 "  --no-constructor Emits private constructors for reflection-backed declarations.",
                 "",
@@ -88,7 +88,7 @@ function run(options) {
                 "",
                 "  -n, --name      Wraps everything in a module of the specified name.",
                 "",
-                "  -m, --main      Whether building the main library without any imports.",
+                "  -m, --main      Whether building a standalone file without any imports.",
                 "",
                 "usage: " + chalk.bold.green("pbts") + " [options] file1.js file2.js ..." + chalk.bold.gray("  (or)  ") + "other | " + chalk.bold.green("pbts") + " [options] -",
                 ""
@@ -191,11 +191,25 @@ function run(options) {
             });
         }
 
+        function addImport(imports, importItem) {
+            var equals = importItem.indexOf("=");
+            if (equals < 0) {
+                imports[getImportName(importItem)] = importItem;
+                return;
+            }
+
+            var importName = importItem.substring(0, equals),
+                importPath = importItem.substring(equals + 1);
+            if (importName[0] === "\\" && importName[1] === "$")
+                importName = importName.substring(1);
+            imports[importName] = importPath;
+        }
+
         function finish() {
             var output = [];
             if (argv.main)
                 output.push(
-                    "// DO NOT EDIT! This is a generated file. Edit the JSDoc in src/*.js instead and run 'npm run build:types'.",
+                    "// DO NOT EDIT! This is a generated file. Edit the source file instead and regenerate.",
                     ""
                 );
             if (argv.global)
@@ -204,16 +218,19 @@ function run(options) {
                     ""
                 );
 
-            if (!argv.main) {
+            if (!argv.main || argv.import) {
                 // Ensure we have a usable array of imports
-                var importArray = typeof argv.import === "string" ? argv.import.split(",") : argv.import || [];
+                var importArray = [];
+                [].concat(argv.import || []).forEach(function(importItem) {
+                    importArray = importArray.concat(importItem.split(","));
+                });
 
                 // Build an object of imports and paths
-                var imports = {
+                var imports = argv.main ? {} : {
                     $protobuf: "protobufjs"
                 };
                 importArray.forEach(function(importItem) {
-                    imports[getImportName(importItem)] = importItem;
+                    addImport(imports, importItem);
                 });
 
                 // Write out the imports
@@ -221,10 +238,14 @@ function run(options) {
                     output.push("import * as " + key + " from \"" + imports[key] + "\";");
                 });
 
-                output.push("import Long = require(\"long\");");
+                if (!argv.main)
+                    output.push("import Long = require(\"long\");");
+                output.push("");
             }
 
-            output = output.join("\n") + "\n" + out.join("");
+            output = output.length
+                ? output.join("\n") + "\n" + out.join("")
+                : out.join("");
 
             try {
                 if (argv.out)

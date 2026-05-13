@@ -610,10 +610,33 @@ Field.prototype.toDescriptor = function toDescriptor(edition) {
  */
 
 /**
+ * Properties of an EnumValueOptions message.
+ * @interface IEnumValueOptions
+ * @property {boolean} [deprecated]
+ * @property {IFeatureSet} [features]
+ * @property {boolean} [debugRedact]
+ * @property {*} [featureSupport]
+ * @property {Array.<*>} [uninterpretedOption]
+ */
+
+/**
  * Properties of an EnumOptions message.
  * @interface IEnumOptions
  * @property {boolean} [allowAlias] Whether aliases are allowed
  * @property {boolean} [deprecated]
+ */
+
+/**
+ * Properties of a FeatureSet message.
+ * @interface IFeatureSet
+ * @property {number} [fieldPresence]
+ * @property {number} [enumType]
+ * @property {number} [repeatedFieldEncoding]
+ * @property {number} [utf8Validation]
+ * @property {number} [messageEncoding]
+ * @property {number} [jsonFormat]
+ * @property {number} [enforceNamingStyle]
+ * @property {number} [defaultSymbolVisibility]
  */
 
 var unnamedEnumIndex = 0;
@@ -690,6 +713,13 @@ Enum.prototype.toDescriptor = function toDescriptor() {
  * @interface IOneofDescriptorProto
  * @property {string} [name] Oneof name
  * @property {IOneofOptions} [options] Oneof options
+ */
+
+/**
+ * Properties of a OneofOptions message.
+ * @interface IOneofOptions
+ * @property {IFeatureSet} [features]
+ * @property {Array.<*>} [uninterpretedOption]
  */
 
 var unnamedOneofIndex = 0;
@@ -1056,186 +1086,181 @@ function editionToDescriptor(edition, fileDescriptor) {
 /**
  * Reflected file descriptor set.
  * @name FileDescriptorSet
- * @type {Type}
+ * @type {$protobuf.Type}
  * @const
- * @tstype $protobuf.Type
  */
 
 /**
  * Reflected file descriptor proto.
  * @name FileDescriptorProto
- * @type {Type}
+ * @type {$protobuf.Type}
  * @const
- * @tstype $protobuf.Type
  */
 
 /**
  * Reflected descriptor proto.
  * @name DescriptorProto
- * @type {Type}
- * @property {Type} ExtensionRange
- * @property {Type} ReservedRange
- * @const
- * @tstype $protobuf.Type & {
+ * @type {$protobuf.Type & {
  *     ExtensionRange: $protobuf.Type,
  *     ReservedRange: $protobuf.Type
- * }
+ * }}
+ * @const
  */
 
 /**
  * Reflected field descriptor proto.
  * @name FieldDescriptorProto
- * @type {Type}
- * @property {Enum} Label
- * @property {Enum} Type
- * @const
- * @tstype $protobuf.Type & {
+ * @type {$protobuf.Type & {
  *     Label: $protobuf.Enum,
  *     Type: $protobuf.Enum
- * }
+ * }}
+ * @const
  */
 
 /**
  * Reflected oneof descriptor proto.
  * @name OneofDescriptorProto
- * @type {Type}
+ * @type {$protobuf.Type}
  * @const
- * @tstype $protobuf.Type
  */
 
 /**
  * Reflected enum descriptor proto.
  * @name EnumDescriptorProto
- * @type {Type}
+ * @type {$protobuf.Type}
  * @const
- * @tstype $protobuf.Type
  */
 
 /**
  * Reflected service descriptor proto.
  * @name ServiceDescriptorProto
- * @type {Type}
+ * @type {$protobuf.Type}
  * @const
- * @tstype $protobuf.Type
  */
 
 /**
  * Reflected enum value descriptor proto.
  * @name EnumValueDescriptorProto
- * @type {Type}
+ * @type {$protobuf.Type}
  * @const
- * @tstype $protobuf.Type
  */
 
 /**
  * Reflected method descriptor proto.
  * @name MethodDescriptorProto
- * @type {Type}
+ * @type {$protobuf.Type}
  * @const
- * @tstype $protobuf.Type
  */
 
 /**
  * Reflected file options.
  * @name FileOptions
- * @type {Type}
- * @property {Enum} OptimizeMode
- * @const
- * @tstype $protobuf.Type & {
+ * @type {$protobuf.Type & {
  *     OptimizeMode: $protobuf.Enum
- * }
+ * }}
+ * @const
  */
 
 /**
  * Reflected message options.
  * @name MessageOptions
- * @type {Type}
+ * @type {$protobuf.Type}
  * @const
- * @tstype $protobuf.Type
  */
 
 /**
  * Reflected field options.
  * @name FieldOptions
- * @type {Type}
- * @property {Enum} CType
- * @property {Enum} JSType
- * @const
- * @tstype $protobuf.Type & {
+ * @type {$protobuf.Type & {
  *     CType: $protobuf.Enum,
  *     JSType: $protobuf.Enum
- * }
+ * }}
+ * @const
  */
 
 /**
  * Reflected oneof options.
  * @name OneofOptions
- * @type {Type}
+ * @type {$protobuf.Type}
  * @const
- * @tstype $protobuf.Type
  */
 
 /**
  * Reflected enum options.
  * @name EnumOptions
- * @type {Type}
+ * @type {$protobuf.Type}
  * @const
- * @tstype $protobuf.Type
  */
 
 /**
  * Reflected enum value options.
  * @name EnumValueOptions
- * @type {Type}
+ * @type {$protobuf.Type}
  * @const
- * @tstype $protobuf.Type
  */
 
 /**
  * Reflected service options.
  * @name ServiceOptions
- * @type {Type}
+ * @type {$protobuf.Type}
  * @const
- * @tstype $protobuf.Type
  */
 
 /**
  * Reflected method options.
  * @name MethodOptions
- * @type {Type}
+ * @type {$protobuf.Type}
  * @const
- * @tstype $protobuf.Type
+ */
+
+/**
+ * Reflected feature set.
+ * @name FeatureSet
+ * @type {$protobuf.Type & {
+ *     FieldPresence: $protobuf.Enum,
+ *     EnumType: $protobuf.Enum,
+ *     RepeatedFieldEncoding: $protobuf.Enum,
+ *     Utf8Validation: $protobuf.Enum,
+ *     MessageEncoding: $protobuf.Enum,
+ *     JsonFormat: $protobuf.Enum,
+ *     EnforceNamingStyle: $protobuf.Enum,
+ *     VisibilityFeature: $protobuf.Type
+ * }}
+ * @const
+ */
+
+/**
+ * Reflected feature set defaults.
+ * @name FeatureSetDefaults
+ * @type {$protobuf.Type & {
+ *     FeatureSetEditionDefault: $protobuf.Type
+ * }}
+ * @const
  */
 
 /**
  * Reflected uninterpretet option.
  * @name UninterpretedOption
- * @type {Type}
- * @property {Type} NamePart
- * @const
- * @tstype $protobuf.Type & {
+ * @type {$protobuf.Type & {
  *     NamePart: $protobuf.Type
- * }
+ * }}
+ * @const
  */
 
 /**
  * Reflected source code info.
  * @name SourceCodeInfo
- * @type {Type}
- * @property {Type} Location
- * @const
- * @tstype $protobuf.Type & {
+ * @type {$protobuf.Type & {
  *     Location: $protobuf.Type
- * }
+ * }}
+ * @const
  */
 
 /**
  * Reflected generated code info.
  * @name GeneratedCodeInfo
- * @type {Type}
- * @property {Type} Annotation
- * @const
- * @tstype $protobuf.Type & {
+ * @type {$protobuf.Type & {
  *     Annotation: $protobuf.Type
- * }
+ * }}
+ * @const
  */

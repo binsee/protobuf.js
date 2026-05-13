@@ -259,10 +259,12 @@ Field.prototype.setOption = function setOption(name, value, ifNotSet) {
 /**
  * Field descriptor.
  * @interface IField
+ * @property {string} [edition] Edition
  * @property {string} [rule="optional"] Field rule
  * @property {string} type Field type
  * @property {number} id Field id
  * @property {Object.<string,*>} [options] Field options
+ * @property {string|null} [comment] Field comment
  */
 
 /**

@@ -111,7 +111,7 @@ function Method(name, type, requestType, responseType, requestStream, responseSt
  * @property {boolean} [requestStream=false] Whether requests are streamed
  * @property {boolean} [responseStream=false] Whether responses are streamed
  * @property {Object.<string,*>} [options] Method options
- * @property {string} comment Method comments
+ * @property {string|null} [comment] Method comment
  * @property {Array.<Object.<string,*>>} [parsedOptions] Method options properly parsed into objects
  */
 

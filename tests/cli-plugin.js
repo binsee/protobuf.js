@@ -61,7 +61,7 @@ tape.test("protoc-gen-pbjs generates static-module responses", function(test) {
             test.ok(response.file[0].content.indexOf("protobufjs/minimal.js") >= 0, "uses minimal runtime for esm static module");
             test.ok(response.file[0].content.indexOf("regularField") >= 0, "camel-cases descriptor field names by default");
             test.ok(response.file[0].content.indexOf("regular_field") < 0, "does not keep snake_case by default");
-            test.ok(response.file[1].content.indexOf("constructor(properties?: IOneofContainer);") >= 0, "emits constructable static declarations");
+            test.ok(response.file[1].content.indexOf("constructor(properties?: OneofContainer.$Properties);") >= 0, "emits constructable static declarations");
             test.end();
         });
     });

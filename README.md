@@ -70,7 +70,7 @@ protobuf.js converts `.proto` field names to camelCase by default, so `awesome_f
 
 ### Load a schema
 
-```js
+```ts
 const protobuf = require("protobufjs");
 
 const root = protobuf.loadSync("awesome.proto");
@@ -81,7 +81,7 @@ Use `protobuf.load()` for the asynchronous variant.
 
 ### Encode and decode
 
-```js
+```ts
 const payload = { awesomeField: "hello" };
 
 // Optionally verify if the payload is of uncertain shape
@@ -103,7 +103,7 @@ Install [`long`](https://github.com/dcodeIO/long.js) with protobuf.js when exact
 
 ### Convert plain objects
 
-```js
+```ts
 const message = AwesomeMessage.fromObject({ awesomeField: 42 });
 const object = AwesomeMessage.toObject(message, {
   longs: String,
@@ -197,7 +197,7 @@ Bundling schemas avoids reparsing `.proto` files at runtime and can reduce brows
 npx pbjs -t json -o awesome.json awesome1.proto awesome2.proto ...
 ```
 
-```js
+```ts
 const bundle = require("./awesome.json");
 
 const root = protobuf.Root.fromJSON(bundle);
@@ -208,7 +208,7 @@ const AwesomeMessage = root.lookupType("awesomepackage.AwesomeMessage");
 npx pbjs -t json-module -w esm -o awesome.js --dts awesome.proto
 ```
 
-```js
+```ts
 import { awesomepackage } from "./awesome.js";
 
 const AwesomeMessage = awesomepackage.AwesomeMessage;
@@ -218,7 +218,45 @@ JSON modules export the reflection root and, with `-w esm`, also provide top-lev
 
 ### TypeScript integration
 
-TypeScript is a first-class target in protobuf.js. The runtime API is typed, and with `--dts`, both `json-module` and `static-module` emit ready-to-run JavaScript modules together with matching TypeScript declarations. No separate transpile step is necessary.
+protobuf.js works with TypeScript out of the box: the runtime API is typed, and generated declarations expose idiomatic TypeScript types with type-checked oneofs and JavaScript-friendly plain-object input. No separate `protoc` invocation or TypeScript transpile step is necessary.
+
+For example, given the oneof:
+
+```proto
+message Profile {
+  oneof contact {
+    string email = 1;
+    string phone = 2;
+  }
+}
+```
+
+Generated declarations narrow both the `contact` oneof and the concrete values:
+
+```ts
+const profile = Profile.create({
+  contact: "email",
+  email: "hello@example.com"
+});
+
+if (profile.contact === "email") {
+  profile.email; // string
+}
+
+const decoded = Profile.decode(bytes);
+if (decoded.phone != null) {
+  decoded.phone; // string
+}
+```
+
+Plain objects can use the same narrowed shape through a collision-free scoped type:
+
+```ts
+const object: Profile.$Shape = {
+  contact: "email",
+  email: "hello@example.com"
+};
+```
 
 ## Advanced usage
 
@@ -226,7 +264,7 @@ TypeScript is a first-class target in protobuf.js. The runtime API is typed, and
 
 The full and light builds can construct schemas directly through reflection:
 
-```js
+```ts
 const AwesomeMessage = new protobuf.Type("AwesomeMessage")
   .add(new protobuf.Field("awesomeField", 1, "string"));
 
@@ -237,30 +275,29 @@ const root = new protobuf.Root()
 
 ### Custom message classes
 
-Message classes can be extended by reusing the generated constructor:
+A reflected type can use a custom class as its runtime constructor:
 
-```js
-const AwesomeMessage = root.lookupType("awesomepackage.AwesomeMessage").ctor;
+```ts
+class AwesomeMessage extends protobuf.Message<AwesomeMessage> {
+  awesomeField = "";
 
-AwesomeMessage.customStaticMethod = function() {
-  // ...
-};
-AwesomeMessage.prototype.customInstanceMethod = function() {
-  // ...
-};
-```
+  constructor(properties?: protobuf.Properties<AwesomeMessage>) {
+    super(properties);
+    // ...
+  }
 
-Alternatively, a custom constructor can be registered:
-
-```js
-function AwesomeMessage(properties) {
-  // ...
+  customInstanceMethod() {
+    return this.awesomeField.toLowerCase();
+  }
 }
 
 root.lookupType("awesomepackage.AwesomeMessage").ctor = AwesomeMessage;
+
+const decoded = AwesomeMessage.decode(bytes);
+decoded.customInstanceMethod(); // string
 ```
 
-Custom constructors are populated with static `create`, `encode`, `encodeDelimited`, `decode`, `decodeDelimited`, `verify`, `fromObject`, `toObject`, and the instance method `toJSON`. The reflected type is available as `AwesomeMessage.$type` and `message.$type`.
+protobuf.js will populate the constructor with the usual static runtime methods and use it for decoded messages. In TypeScript, custom members are visible when using the custom class type in consuming code.
 
 ### Services
 

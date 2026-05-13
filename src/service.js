@@ -41,7 +41,9 @@ function Service(name, options) {
  * Service descriptor.
  * @interface IService
  * @extends INamespace
+ * @property {string} [edition] Edition
  * @property {Object.<string,IMethod>} methods Method descriptors
+ * @property {string|null} [comment] Service comment
  */
 
 /**

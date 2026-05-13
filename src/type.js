@@ -226,11 +226,13 @@ function clearCache(type) {
  * Message type descriptor.
  * @interface IType
  * @extends INamespace
+ * @property {string} [edition] Edition
  * @property {Object.<string,IOneOf>} [oneofs] Oneof descriptors
  * @property {Object.<string,IField>} fields Field descriptors
  * @property {number[][]} [extensions] Extension ranges
  * @property {Array.<number[]|string>} [reserved] Reserved ranges
  * @property {boolean} [group=false] Whether a legacy group or not
+ * @property {string|null} [comment] Message type comment
  */
 
 /**

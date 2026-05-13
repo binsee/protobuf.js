@@ -52,10 +52,9 @@ process.stdout.write("\n");
     { file: "tests/data/rpc.js" },
     { file: "tests/data/rpc-es6.js" },
     { file: "tests/data/rpc-reserved.js" },
-    { file: "tests/data/test.js" },
-    { file: "ext/descriptor/index.js", ext: true }
+    { file: "tests/data/test.js" }
 ]
-.forEach(function({ file, ext }) {
+.forEach(function({ file }) {
     var out = file.replace(/\.js$/, ".d.ts"),
         args = [ "--no-comments" ];
     pbts.main(args.concat(file), function(err, output) {

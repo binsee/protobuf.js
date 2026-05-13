@@ -13,12 +13,24 @@ $root.Test1 = (function() {
 
     /**
      * Properties of a Test1.
-     * @exports ITest1
-     * @interface ITest1
+     * @typedef {Object} Test1.$Properties
      * @property {string|null} [field1] Field with a comment.
      * @property {number|null} [field2] Test1 field2
      * @property {boolean|null} [field3] Field with a comment and a <a href="http://example.com/foo/">link</a>
      * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding
+     */
+
+    /**
+     * Properties of a Test1.
+     * @exports ITest1
+     * @interface ITest1
+     * @augments Test1.$Properties
+     * @deprecated Use Test1.$Properties instead.
+     */
+
+    /**
+     * Shape of a Test1.
+     * @typedef {Test1.$Properties} Test1.$Shape
      */
 
     /**
@@ -28,9 +40,8 @@ $root.Test1 = (function() {
      * with
      * a
      * comment.
-     * @implements ITest1
      * @constructor
-     * @param {ITest1=} [properties] Properties to set
+     * @param {Test1.$Properties=} [properties] Properties to set
      * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding
      */
     function Test1(properties) {
@@ -69,8 +80,12 @@ $root.Test1 = (function() {
      * @function create
      * @memberof Test1
      * @static
-     * @param {ITest1=} [properties] Properties to set
+     * @param {Test1.$Properties=} [properties] Properties to set
      * @returns {Test1} Test1 instance
+     * @type {{
+     *   (properties: Test1.$Shape): Test1 & Test1.$Shape;
+     *   (properties?: Test1.$Properties): Test1;
+     * }}
      */
     Test1.create = function create(properties) {
         return new Test1(properties);
@@ -81,7 +96,7 @@ $root.Test1 = (function() {
      * @function encode
      * @memberof Test1
      * @static
-     * @param {ITest1} message Test1 message or plain object to encode
+     * @param {Test1.$Properties} message Test1 message or plain object to encode
      * @param {$protobuf.Writer} [writer] Writer to encode to
      * @returns {$protobuf.Writer} Writer
      */
@@ -105,7 +120,7 @@ $root.Test1 = (function() {
      * @function encodeDelimited
      * @memberof Test1
      * @static
-     * @param {ITest1} message Test1 message or plain object to encode
+     * @param {Test1.$Properties} message Test1 message or plain object to encode
      * @param {$protobuf.Writer} [writer] Writer to encode to
      * @returns {$protobuf.Writer} Writer
      */
@@ -120,7 +135,7 @@ $root.Test1 = (function() {
      * @static
      * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
      * @param {number} [length] Message length if known beforehand
-     * @returns {Test1} Test1
+     * @returns {Test1 & Test1.$Shape} Test1
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
@@ -184,7 +199,7 @@ $root.Test1 = (function() {
      * @memberof Test1
      * @static
      * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @returns {Test1} Test1
+     * @returns {Test1 & Test1.$Shape} Test1
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
@@ -308,18 +323,29 @@ $root.Test2 = (function() {
 
     /**
      * Properties of a Test2.
+     * @typedef {Object} Test2.$Properties
+     * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding
+     */
+
+    /**
+     * Properties of a Test2.
      * @exports ITest2
      * @interface ITest2
-     * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding
+     * @augments Test2.$Properties
+     * @deprecated Use Test2.$Properties instead.
+     */
+
+    /**
+     * Shape of a Test2.
+     * @typedef {Test2.$Properties} Test2.$Shape
      */
 
     /**
      * Constructs a new Test2.
      * @exports Test2
      * @classdesc Represents a Test2.
-     * @implements ITest2
      * @constructor
-     * @param {ITest2=} [properties] Properties to set
+     * @param {Test2.$Properties=} [properties] Properties to set
      * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding
      */
     function Test2(properties) {
@@ -334,8 +360,12 @@ $root.Test2 = (function() {
      * @function create
      * @memberof Test2
      * @static
-     * @param {ITest2=} [properties] Properties to set
+     * @param {Test2.$Properties=} [properties] Properties to set
      * @returns {Test2} Test2 instance
+     * @type {{
+     *   (properties: Test2.$Shape): Test2 & Test2.$Shape;
+     *   (properties?: Test2.$Properties): Test2;
+     * }}
      */
     Test2.create = function create(properties) {
         return new Test2(properties);
@@ -346,7 +376,7 @@ $root.Test2 = (function() {
      * @function encode
      * @memberof Test2
      * @static
-     * @param {ITest2} message Test2 message or plain object to encode
+     * @param {Test2.$Properties} message Test2 message or plain object to encode
      * @param {$protobuf.Writer} [writer] Writer to encode to
      * @returns {$protobuf.Writer} Writer
      */
@@ -364,7 +394,7 @@ $root.Test2 = (function() {
      * @function encodeDelimited
      * @memberof Test2
      * @static
-     * @param {ITest2} message Test2 message or plain object to encode
+     * @param {Test2.$Properties} message Test2 message or plain object to encode
      * @param {$protobuf.Writer} [writer] Writer to encode to
      * @returns {$protobuf.Writer} Writer
      */
@@ -379,7 +409,7 @@ $root.Test2 = (function() {
      * @static
      * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
      * @param {number} [length] Message length if known beforehand
-     * @returns {Test2} Test2
+     * @returns {Test2 & Test2.$Shape} Test2
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
@@ -413,7 +443,7 @@ $root.Test2 = (function() {
      * @memberof Test2
      * @static
      * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @returns {Test2} Test2
+     * @returns {Test2 & Test2.$Shape} Test2
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */

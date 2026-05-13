@@ -79,19 +79,30 @@ export const MyRequest = $root.MyRequest = (() => {
 
     /**
      * Properties of a MyRequest.
-     * @exports IMyRequest
-     * @interface IMyRequest
+     * @typedef {Object} MyRequest.$Properties
      * @property {string|null} [path] MyRequest path
      * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding
+     */
+
+    /**
+     * Properties of a MyRequest.
+     * @exports IMyRequest
+     * @interface IMyRequest
+     * @augments MyRequest.$Properties
+     * @deprecated Use MyRequest.$Properties instead.
+     */
+
+    /**
+     * Shape of a MyRequest.
+     * @typedef {MyRequest.$Properties} MyRequest.$Shape
      */
 
     /**
      * Constructs a new MyRequest.
      * @exports MyRequest
      * @classdesc Represents a MyRequest.
-     * @implements IMyRequest
      * @constructor
-     * @param {IMyRequest=} [properties] Properties to set
+     * @param {MyRequest.$Properties=} [properties] Properties to set
      * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding
      */
     function MyRequest(properties) {
@@ -114,8 +125,12 @@ export const MyRequest = $root.MyRequest = (() => {
      * @function create
      * @memberof MyRequest
      * @static
-     * @param {IMyRequest=} [properties] Properties to set
+     * @param {MyRequest.$Properties=} [properties] Properties to set
      * @returns {MyRequest} MyRequest instance
+     * @type {{
+     *   (properties: MyRequest.$Shape): MyRequest & MyRequest.$Shape;
+     *   (properties?: MyRequest.$Properties): MyRequest;
+     * }}
      */
     MyRequest.create = function create(properties) {
         return new MyRequest(properties);
@@ -126,7 +141,7 @@ export const MyRequest = $root.MyRequest = (() => {
      * @function encode
      * @memberof MyRequest
      * @static
-     * @param {IMyRequest} message MyRequest message or plain object to encode
+     * @param {MyRequest.$Properties} message MyRequest message or plain object to encode
      * @param {$protobuf.Writer} [writer] Writer to encode to
      * @returns {$protobuf.Writer} Writer
      */
@@ -146,7 +161,7 @@ export const MyRequest = $root.MyRequest = (() => {
      * @function encodeDelimited
      * @memberof MyRequest
      * @static
-     * @param {IMyRequest} message MyRequest message or plain object to encode
+     * @param {MyRequest.$Properties} message MyRequest message or plain object to encode
      * @param {$protobuf.Writer} [writer] Writer to encode to
      * @returns {$protobuf.Writer} Writer
      */
@@ -161,7 +176,7 @@ export const MyRequest = $root.MyRequest = (() => {
      * @static
      * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
      * @param {number} [length] Message length if known beforehand
-     * @returns {MyRequest} MyRequest
+     * @returns {MyRequest & MyRequest.$Shape} MyRequest
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
@@ -207,7 +222,7 @@ export const MyRequest = $root.MyRequest = (() => {
      * @memberof MyRequest
      * @static
      * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @returns {MyRequest} MyRequest
+     * @returns {MyRequest & MyRequest.$Shape} MyRequest
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
@@ -312,19 +327,30 @@ export const MyResponse = $root.MyResponse = (() => {
 
     /**
      * Properties of a MyResponse.
-     * @exports IMyResponse
-     * @interface IMyResponse
+     * @typedef {Object} MyResponse.$Properties
      * @property {number|null} [status] MyResponse status
      * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding
+     */
+
+    /**
+     * Properties of a MyResponse.
+     * @exports IMyResponse
+     * @interface IMyResponse
+     * @augments MyResponse.$Properties
+     * @deprecated Use MyResponse.$Properties instead.
+     */
+
+    /**
+     * Shape of a MyResponse.
+     * @typedef {MyResponse.$Properties} MyResponse.$Shape
      */
 
     /**
      * Constructs a new MyResponse.
      * @exports MyResponse
      * @classdesc Represents a MyResponse.
-     * @implements IMyResponse
      * @constructor
-     * @param {IMyResponse=} [properties] Properties to set
+     * @param {MyResponse.$Properties=} [properties] Properties to set
      * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding
      */
     function MyResponse(properties) {
@@ -347,8 +373,12 @@ export const MyResponse = $root.MyResponse = (() => {
      * @function create
      * @memberof MyResponse
      * @static
-     * @param {IMyResponse=} [properties] Properties to set
+     * @param {MyResponse.$Properties=} [properties] Properties to set
      * @returns {MyResponse} MyResponse instance
+     * @type {{
+     *   (properties: MyResponse.$Shape): MyResponse & MyResponse.$Shape;
+     *   (properties?: MyResponse.$Properties): MyResponse;
+     * }}
      */
     MyResponse.create = function create(properties) {
         return new MyResponse(properties);
@@ -359,7 +389,7 @@ export const MyResponse = $root.MyResponse = (() => {
      * @function encode
      * @memberof MyResponse
      * @static
-     * @param {IMyResponse} message MyResponse message or plain object to encode
+     * @param {MyResponse.$Properties} message MyResponse message or plain object to encode
      * @param {$protobuf.Writer} [writer] Writer to encode to
      * @returns {$protobuf.Writer} Writer
      */
@@ -379,7 +409,7 @@ export const MyResponse = $root.MyResponse = (() => {
      * @function encodeDelimited
      * @memberof MyResponse
      * @static
-     * @param {IMyResponse} message MyResponse message or plain object to encode
+     * @param {MyResponse.$Properties} message MyResponse message or plain object to encode
      * @param {$protobuf.Writer} [writer] Writer to encode to
      * @returns {$protobuf.Writer} Writer
      */
@@ -394,7 +424,7 @@ export const MyResponse = $root.MyResponse = (() => {
      * @static
      * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
      * @param {number} [length] Message length if known beforehand
-     * @returns {MyResponse} MyResponse
+     * @returns {MyResponse & MyResponse.$Shape} MyResponse
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
@@ -440,7 +470,7 @@ export const MyResponse = $root.MyResponse = (() => {
      * @memberof MyResponse
      * @static
      * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @returns {MyResponse} MyResponse
+     * @returns {MyResponse & MyResponse.$Shape} MyResponse
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
